@@ -1,2 +1,2 @@
 # PiGPIO
-Pharo interfsce to PiGPIO llibrary for Raspberry Pi
+Pharo interface to PiGPIO llibrary for Raspberry Pi
