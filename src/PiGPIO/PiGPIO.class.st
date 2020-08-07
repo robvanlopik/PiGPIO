@@ -1,3 +1,6 @@
+"
+see http://abyz.me.uk/rpi/pigpio/sif.html for the PiGPIO socket interface. Command names and numeric values are defined their and always mentioned in the method comments.
+"
 Class {
 	#name : #PiGPIO,
 	#superclass : #Object,
@@ -100,11 +103,67 @@ PiGPIO >> pin: pinNr mode: modeNr [
 ]
 
 { #category : #pwm }
+PiGPIO >> pin: pinNr pwmFrequency: aFrequency [
+	"cset the PWM frequency to nearest possible value"
+	"PFS = 7"	
+			
+	^self runCommand: 7 p1: pinNr p2: aFrequency
+]
+
+{ #category : #pwm }
+PiGPIO >> pin: pinNr pwmRange: range [
+	"set the PWM range for the pin
+	PRS = 6"	
+			
+	^self runCommand: 6 p1: pinNr p2: range 
+]
+
+{ #category : #pwm }
 PiGPIO >> pin: pinNr pwmWrite: aNumber [
-	"cset the PWM value between 0 and range (see pwmRangeForPin:
+	"cset the PWM value between 0 and range (see pwmRangeForPin:, default is 255)
 	PWM = 5"	
 			
 	self runCommand: 5 p1: pinNr p2: aNumber
+]
+
+{ #category : #servos }
+PiGPIO >> pin: pinNr servoPulsewidth: width [
+	"set the pulse width in microseconds; frequencyis fixed at 50 Hz.
+	SERVO = 8"	
+			
+	^self runCommand: 8 p1: pinNr p2: width
+]
+
+{ #category : #pwm }
+PiGPIO >> pwmFrequencyOnPin: aPinNr [
+	"request PWF frequency of the pin
+	PFG = 23"	
+			
+	^self runCommand: 23 p1: aPinNr p2: 0
+]
+
+{ #category : #pwm }
+PiGPIO >> pwmRangeOnPin: pinNr [
+	"report the pwm range on the pin
+	PRG = 22"	
+			
+	^self runCommand: 22 p1: pinNr p2: 0
+]
+
+{ #category : #pwm }
+PiGPIO >> pwmRealRangeOnPin: pinNr [
+	"set the real PWM range for the pin
+	PRRG = 24"	
+			
+	^self runCommand: 24 p1: pinNr p2: 0 
+]
+
+{ #category : #pwm }
+PiGPIO >> pwmValueForPin: pinNr [
+	"get the value (duty cycle) for pin
+	GDC	 = 83"
+			
+	^self runCommand: 83 p1: pinNr p2: 0
 ]
 
 { #category : #utilities }
@@ -118,6 +177,13 @@ PiGPIO >> runCommand: cmdNr p1: param1 p2: param2 [
 	result := answer signedLongAt: 13.
 	self assert: (result >= 0) description: ('error code: ', result printString ) .
 	^result
+]
+
+{ #category : #servos }
+PiGPIO >> servoPulsewidthOnPin: pinNr [
+	"get the servo pulse width of the pin
+	GPW = 84"
+	^self runCommand: 84 p1: pinNr p2: 0
 ]
 
 { #category : #accessing }
