@@ -99,6 +99,14 @@ PiGPIO >> pin: pinNr mode: modeNr [
 	 self runCommand: 0 p1: pinNr p2: modeNr
 ]
 
+{ #category : #pwm }
+PiGPIO >> pin: pinNr pwmWrite: aNumber [
+	"cset the PWM value between 0 and range (see pwmRangeForPin:
+	PWM = 5"	
+			
+	self runCommand: 5 p1: pinNr p2: aNumber
+]
+
 { #category : #utilities }
 PiGPIO >> runCommand: cmdNr p1: param1 p2: param2 [
 	"run the command nr with mutex control. assert an eventual error else return the result"	
