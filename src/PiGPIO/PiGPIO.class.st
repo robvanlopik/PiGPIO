@@ -49,8 +49,8 @@ PiGPIO >> digitalRead: pinNr [
 	^self runCommand: 3 p1: pinNr p2:0
 ]
 
-{ #category : #'as yet unclassified' }
-PiGPIO >> digitalwrite: pinNr value: oneOrZero [
+{ #category : #'digital pins' }
+PiGPIO >> digitalWrite: pinNr value: oneOrZero [
 	"cset digital output on pin pinNr
 	WRITE = 4"
 	| data |
@@ -75,12 +75,24 @@ PiGPIO >> isConnected [
 	^socket notNil
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'digital pins' }
 PiGPIO >> modeOfPin: pinNr [
 	"get the mode of pin pinNr. 0 meansoutput, 1 = input ...
 		MODEG = 1"
 		
 	^self runCommand: 1 p1: pinNr p2: 0
+]
+
+{ #category : #i2c }
+PiGPIO >> openI2C: devId [
+	"create a n I2C connection to a device with I2C address devId.
+	We use bus 1, (on GPIO2 and GPIO3, because bus 0 is taken by the system;
+	 actually, on the oldes Pi's you should use bus 0
+	I2CO = 54"	
+	
+	| h |
+	h := self runExtendedCommand: 54 p1: 1 p2: devId bytes: (#(0 0 0 0) asByteArray).
+	^PiGPIOI2CConnection new piGPIO: self; handle: h; yourself
 ]
 
 { #category : #utilities }
@@ -93,6 +105,21 @@ PiGPIO >> packedCommand: cmdNr p1: param1 p2: param2 [
 					unsignedLongAt: 13 put: 0.
 	^commandBuffer
 					
+]
+
+{ #category : #utilities }
+PiGPIO >> packedExtendedCommand: cmdNr p1: param1 p2: param2 bytes: aByteArray [ 
+	"create an extended command stringwith p3 the size of the extent	"
+			
+	| commandBuffer |
+	commandBuffer := ByteArray new: (16 + aByteArray size).
+	commandBuffer  unsignedLongAt: 1 put: cmdNr ;
+					unsignedLongAt: 5 put: param1;
+					unsignedLongAt: 9 put: param2;
+					unsignedLongAt: 13 put: (aByteArray size).
+	1 to: (aByteArray size)	do: [ :i | commandBuffer at: (i + 16) put: (aByteArray at: i) ]	.		
+	^commandBuffer
+	
 ]
 
 { #category : #'digital pins' }
@@ -173,6 +200,19 @@ PiGPIO >> runCommand: cmdNr p1: param1 p2: param2 [
 	| answer result|
 	socketLock critical: 
 		[ socket sendData: (self packedCommand: cmdNr p1: param1 p2: param2).
+			answer := socket receiveData asByteArray ].
+	result := answer signedLongAt: 13.
+	self assert: (result >= 0) description: ('error code: ', result printString ) .
+	^result
+]
+
+{ #category : #utilities }
+PiGPIO >> runExtendedCommand: cmdNr p1: param1 p2: param2 bytes: aByteArray [
+	"run the command nr with mutex control. assert an eventual error else return the result"	
+			
+	| answer result|
+	socketLock critical: 
+		[ socket sendData: (self packedExtendedCommand: cmdNr p1: param1 p2: param2 bytes: aByteArray).
 			answer := socket receiveData asByteArray ].
 	result := answer signedLongAt: 13.
 	self assert: (result >= 0) description: ('error code: ', result printString ) .
