@@ -54,6 +54,14 @@ PiGPIOI2CConnection >> read8BitsAt: register [
 ]
 
 { #category : #accessing }
+PiGPIOI2CConnection >> write16BitsAt: register data: aWord [
+	"Read a word (2 bytes) at a register; returns a byte as lowest part of an integer
+	I2CRW = 63"
+	^self piGPIO runExtendedCommand: 63 p1: handle p2: register 
+			bytes: (ByteArray with: (aWord \\ 256) with: (aWord // 256) with: 0 with: 0 )
+]
+
+{ #category : #accessing }
 PiGPIOI2CConnection >> write16itsAt: register data: aWord [
 	"Read a byte at a register; returns a byte as lowest part of an integer
 	I2CRB = 64"

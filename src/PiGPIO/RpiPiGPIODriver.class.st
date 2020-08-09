@@ -2,28 +2,38 @@ Class {
 	#name : #RpiPiGPIODriver,
 	#superclass : #PotBoardDriver,
 	#instVars : [
-		'driver'
+		'piGPIO'
 	],
 	#category : #PiGPIO
 }
 
 { #category : #accessing }
+RpiPiGPIODriver class >> driver: aPiGPIOdriver [
+	self new driver: aPiGPIOdriver
+]
+
+{ #category : #controlling }
+RpiPiGPIODriver >> connectToBoard [
+	piGPIO version
+]
+
+{ #category : #accessing }
 RpiPiGPIODriver >> driver: aPiGPIOInstance [
 	
-	driver := aPiGPIOInstance
+	piGPIO := aPiGPIOInstance
 ]
 
 { #category : #operations }
 RpiPiGPIODriver >> readDigitalValueFrom: aPin [
-	^driver digitalRead: aPin
+	^piGPIO digitalRead: aPin
 ]
 
 { #category : #operations }
 RpiPiGPIODriver >> writeDigitalValue: aBit into: aPin [
-	driver digitalWrite: aPin value: aBit
+	piGPIO digitalWrite: aPin value: aBit
 ]
 
 { #category : #operations }
 RpiPiGPIODriver >> writePWMValue: anInteger into: aPin [
-	driver pin: aPin pwmWrite: anInteger
+	piGPIO pin: aPin pwmWrite: anInteger
 ]
