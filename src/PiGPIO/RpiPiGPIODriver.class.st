@@ -1,3 +1,12 @@
+"
+Puusage example:
+
+myRemotePi := RpiBoard3B driver: (RpiPiGPIODriver onIP: '192.168.1.92' port: 8888)
+
+also now:
+
+clock := myRemotePi installDevice: (PotDS1307Device new)
+"
 Class {
 	#name : #RpiPiGPIODriver,
 	#superclass : #PotBoardDriver,
