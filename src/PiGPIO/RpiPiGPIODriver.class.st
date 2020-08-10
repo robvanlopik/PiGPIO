@@ -26,6 +26,13 @@ RpiPiGPIODriver >> connectToBoard [
 	piGPIO := PiGPIO onIP: ip port: port
 ]
 
+{ #category : #'io protocols' }
+RpiPiGPIODriver >> connectToI2CDevice: deviceAddressInt [ 
+	"return a i2c connection that is specific for this addresss"
+	
+	^piGPIO openI2C: deviceAddressInt 
+]
+
 { #category : #accessing }
 RpiPiGPIODriver >> driver: aPiGPIOInstance [
 	
@@ -59,15 +66,22 @@ RpiPiGPIODriver >> port: anObject [
 
 { #category : #operations }
 RpiPiGPIODriver >> readDigitalValueFrom: aPin [
-	^piGPIO digitalRead: aPin
+	^piGPIO digitalRead: aPin id
+]
+
+{ #category : #operations }
+RpiPiGPIODriver >> setIOMode: aPinMode into: aPin [
+	
+	
+	piGPIO pin: aPin id mode: aPinMode asWiringPiConstant
 ]
 
 { #category : #operations }
 RpiPiGPIODriver >> writeDigitalValue: aBit into: aPin [
-	piGPIO digitalWrite: aPin value: aBit
+	piGPIO digitalWrite: aPin id value: aBit
 ]
 
 { #category : #operations }
 RpiPiGPIODriver >> writePWMValue: anInteger into: aPin [
-	piGPIO pin: aPin pwmWrite: anInteger
+	piGPIO pin: aPin id pwmWrite: anInteger
 ]
