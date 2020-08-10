@@ -2,7 +2,9 @@ Class {
 	#name : #RpiPiGPIODriver,
 	#superclass : #PotBoardDriver,
 	#instVars : [
-		'piGPIO'
+		'piGPIO',
+		'ip',
+		'port'
 	],
 	#category : #PiGPIO
 }
@@ -12,15 +14,47 @@ RpiPiGPIODriver class >> driver: aPiGPIOdriver [
 	self new driver: aPiGPIOdriver
 ]
 
+{ #category : #'instance creation' }
+RpiPiGPIODriver class >> onIP: anIPAddress port: aPortNumber [
+	^self new 
+		ip: anIPAddress;
+		port: aPortNumber
+]
+
 { #category : #controlling }
 RpiPiGPIODriver >> connectToBoard [
-	piGPIO version
+	piGPIO := PiGPIO onIP: ip port: port
 ]
 
 { #category : #accessing }
 RpiPiGPIODriver >> driver: aPiGPIOInstance [
 	
 	piGPIO := aPiGPIOInstance
+]
+
+{ #category : #accessing }
+RpiPiGPIODriver >> ip [
+	^ ip
+]
+
+{ #category : #accessing }
+RpiPiGPIODriver >> ip: anObject [
+	ip := anObject
+]
+
+{ #category : #accessing }
+RpiPiGPIODriver >> piGPIO [
+	^ piGPIO
+]
+
+{ #category : #accessing }
+RpiPiGPIODriver >> port [
+	^ port
+]
+
+{ #category : #accessing }
+RpiPiGPIODriver >> port: anObject [
+	port := anObject
 ]
 
 { #category : #operations }
