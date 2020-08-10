@@ -2,7 +2,7 @@
 ### Pharo interface to PiGPIO library for Raspberry Pi
 
 PiGPIO (http://abyz.me.uk/rpi/pigpio/index.html) is used to control the GPIO pins on a Raspberry Pi. This Pharo interface uses the socket interface to de pigpiod daemon. This has three advantages:
-- as the daemmon runs as su, no su is needed for the Pharo code
+- as the daemon runs as su, no privilege is needed for the Pharo code.
 - the Pharo image can be run on the Pi using the local daemon or remote overr TCP/IP.
 - (last but not least) it is simple to implement
 
