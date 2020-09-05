@@ -46,7 +46,7 @@ PiGPIO >> connectOnIP: anIPString port: aPortNumber [
 PiGPIO >> digitalRead: pinNr [
 	"readd the digital pin pinNr	
 	READ = 3"	
-	^self runCommand: 3 p1: pinNr p2:0
+	^(self runCommand: 3 p1: pinNr p2:0) at: 1
 ]
 
 { #category : #'digital pins' }
@@ -67,7 +67,7 @@ PiGPIO >> hwVersion [
 	| answer |
 	socket sendData: (self packedCommand: 17 p1: 0 p2: 0).
 	answer := (socket receiveData ) asByteArray.
-	^answer unsignedLongAt: 13
+	^answer unsignedLongAt: 1
 ]
 
 { #category : #testing }
@@ -80,7 +80,7 @@ PiGPIO >> modeOfPin: pinNr [
 	"get the mode of pin pinNr. 0 meansoutput, 1 = input ...
 		MODEG = 1"
 		
-	^self runCommand: 1 p1: pinNr p2: 0
+	^(self runCommand: 1 p1: pinNr p2: 0) at: 1
 ]
 
 { #category : #i2c }
@@ -91,7 +91,7 @@ PiGPIO >> openI2C: devId [
 	I2CO = 54"	
 	
 	| h |
-	h := self runExtendedCommand: 54 p1: 1 p2: devId bytes: (#(0 0 0 0) asByteArray).
+	h := (self runExtendedCommand: 54 p1: 1 p2: devId bytes: (#(0 0 0 0) asByteArray)) signedLongAt: 1.
 	^PiGPIOI2CConnection new piGPIO: self; handle: h; yourself
 ]
 
@@ -134,7 +134,7 @@ PiGPIO >> pin: pinNr pwmFrequency: aFrequency [
 	"cset the PWM frequency to nearest possible value"
 	"PFS = 7"	
 			
-	^self runCommand: 7 p1: pinNr p2: aFrequency
+	^(self runCommand: 7 p1: pinNr p2: aFrequency) signedLongAt: 1
 ]
 
 { #category : #pwm }
@@ -142,7 +142,7 @@ PiGPIO >> pin: pinNr pwmRange: range [
 	"set the PWM range for the pin
 	PRS = 6"	
 			
-	^self runCommand: 6 p1: pinNr p2: range 
+	^(self runCommand: 6 p1: pinNr p2: range ) signedLongAt: 1
 ]
 
 { #category : #pwm }
@@ -158,7 +158,7 @@ PiGPIO >> pin: pinNr servoPulsewidth: width [
 	"set the pulse width in microseconds; frequencyis fixed at 50 Hz.
 	SERVO = 8"	
 			
-	^self runCommand: 8 p1: pinNr p2: width
+	^(self runCommand: 8 p1: pinNr p2: width) signedLongAt: 1
 ]
 
 { #category : #pwm }
@@ -166,7 +166,7 @@ PiGPIO >> pwmFrequencyOnPin: aPinNr [
 	"request PWF frequency of the pin
 	PFG = 23"	
 			
-	^self runCommand: 23 p1: aPinNr p2: 0
+	^(self runCommand: 23 p1: aPinNr p2: 0) signedLongAt: 1
 ]
 
 { #category : #pwm }
@@ -174,7 +174,7 @@ PiGPIO >> pwmRangeOnPin: pinNr [
 	"report the pwm range on the pin
 	PRG = 22"	
 			
-	^self runCommand: 22 p1: pinNr p2: 0
+	^(self runCommand: 22 p1: pinNr p2: 0) signedLongAt: 1
 ]
 
 { #category : #pwm }
@@ -182,7 +182,7 @@ PiGPIO >> pwmRealRangeOnPin: pinNr [
 	"set the real PWM range for the pin
 	PRRG = 24"	
 			
-	^self runCommand: 24 p1: pinNr p2: 0 
+	^(self runCommand: 24 p1: pinNr p2: 0 ) signedLongAt: 1
 ]
 
 { #category : #pwm }
@@ -190,7 +190,7 @@ PiGPIO >> pwmValueForPin: pinNr [
 	"get the value (duty cycle) for pin
 	GDC	 = 83"
 			
-	^self runCommand: 83 p1: pinNr p2: 0
+	^(self runCommand: 83 p1: pinNr p2: 0) signedLongAt: 1
 ]
 
 { #category : #utilities }
@@ -203,7 +203,7 @@ PiGPIO >> runCommand: cmdNr p1: param1 p2: param2 [
 			answer := socket receiveData asByteArray ].
 	result := answer signedLongAt: 13.
 	self assert: (result >= 0) description: ('error code: ', result printString ) .
-	^result
+	^answer allButFirst: 12
 ]
 
 { #category : #utilities }
@@ -216,14 +216,14 @@ PiGPIO >> runExtendedCommand: cmdNr p1: param1 p2: param2 bytes: aByteArray [
 			answer := socket receiveData asByteArray ].
 	result := answer signedLongAt: 13.
 	self assert: (result >= 0) description: ('error code: ', result printString ) .
-	^result
+	^answer allButFirst: 12
 ]
 
 { #category : #servos }
 PiGPIO >> servoPulsewidthOnPin: pinNr [
 	"get the servo pulse width of the pin
 	GPW = 84"
-	^self runCommand: 84 p1: pinNr p2: 0
+	^(self runCommand: 84 p1: pinNr p2: 0) signedLongAt: 1
 ]
 
 { #category : #accessing }
