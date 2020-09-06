@@ -47,10 +47,29 @@ PiGPIOI2CConnection >> read16BitsAt: register [
 ]
 
 { #category : #accessing }
+PiGPIOI2CConnection >> read8BitsArray: blockSize startingAt: reg [
+	"only used for compatibility with wiringPi"
+	^self readDataBlock: blockSize at: reg
+]
+
+{ #category : #accessing }
 PiGPIOI2CConnection >> read8BitsAt: register [
 	"Read a byte at a register; returns a byte as lowest part of an integer
 	I2CRB = 61"
 	^self piGPIO runCommand: 61 p1: handle p2: register
+]
+
+{ #category : #accessing }
+PiGPIOI2CConnection >> readDataBlock: count at: reg [ 
+	"read count bytes of data starting at register reg"
+	"I2CRI = 67"
+	| result payLoad |
+	payLoad := ByteArray new: 4.
+	payLoad unsignedLongAt: 1 put: count.
+	result := self piGPIO runExtendedCommand: 67 p1: handle p2: reg bytes: payLoad.
+	self assert: ((result signedLongAt: 1) = count) description: 'incorrect byte count from I2CRI'.
+	^result allButFirst: 4
+	
 ]
 
 { #category : #accessing }
