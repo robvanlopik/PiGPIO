@@ -10,7 +10,7 @@ To use it, you must first start the daemon on the Pi:
 `$ sudo pigpiod`
 
 An instance of the driver is created with:
-`myPiController := PiGPIO onPort: '192.168.1.55' port: 8888`
+`myPiController := PiGPIO onIP: '192.168.1.55' port: 8888`
 
 The IP address is an example; use 127.0.0.1 when running on the Rapberry Pi itself. . The default port number is 8888.
 Now you can do things like:
