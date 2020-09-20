@@ -6,6 +6,8 @@ Class {
 	#superclass : #Object,
 	#instVars : [
 		'socket',
+		'commandStream',
+		'commandLock',
 		'socketLock',
 		'ip',
 		'port'
@@ -24,7 +26,7 @@ PiGPIO class >> onIP: anIPString port: aPortNumber [
 PiGPIO >> closeConnection [
 	"shutdown the socket"	
 			
-	socket closeAndDestroy 
+	commandStream close
 ]
 
 { #category : #initialization }
@@ -32,13 +34,18 @@ PiGPIO >> connectOnIP: anIPString port: aPortNumber [
 	"if the socket cannot be opened, store nil"	
 			
 	self isConnected ifTrue: [ ^self ].
-	socket := Socket newTCP.
+	"socket := Socket newTCP.
 	ip := NetNameResolver addressForName: anIPString.
 	port := aPortNumber.
 	socket connectTo: ip port: port;
 		waitForConnectionFor: 10.
 	socket isConnected ifFalse: [ socket := nil ].
-	socketLock := Mutex new.
+	socketLock := Mutex new."
+	commandStream := SocketStream openConnectionToHostNamed: anIPString port: aPortNumber.
+	commandStream isConnected ifFalse: [ commandStream := nil ].
+	commandStream binary.
+	commandLock := Mutex new.
+	
 		
 ]
 
@@ -64,10 +71,7 @@ PiGPIO >> hwVersion [
 	"return the hard version of the board"
 	"HWVER = 17"	
 			
-	| answer |
-	socket sendData: (self packedCommand: 17 p1: 0 p2: 0).
-	answer := (socket receiveData ) asByteArray.
-	^answer unsignedLongAt: 1
+	^(self runCommand: 17 p1: 0 p2: 0) unsignedLongAt: 1
 ]
 
 { #category : #testing }
@@ -85,9 +89,9 @@ PiGPIO >> modeOfPin: pinNr [
 
 { #category : #i2c }
 PiGPIO >> openI2C: devId [
-	"create a n I2C connection to a device with I2C address devId.
-	We use bus 1, (on GPIO2 and GPIO3, because bus 0 is taken by the system;
-	 actually, on the oldes Pi's you should use bus 0
+	"create an I2C connection to a device with I2C address devId.
+	We use bus 1 on GPIO2 and GPIO3, because bus 0 is taken by the system;
+	 actually, on the oldest Pi's you should use bus 0
 	I2CO = 54"	
 	
 	| h |
@@ -117,7 +121,8 @@ PiGPIO >> packedExtendedCommand: cmdNr p1: param1 p2: param2 bytes: aByteArray [
 					unsignedLongAt: 5 put: param1;
 					unsignedLongAt: 9 put: param2;
 					unsignedLongAt: 13 put: (aByteArray size).
-	1 to: (aByteArray size)	do: [ :i | commandBuffer at: (i + 16) put: (aByteArray at: i) ]	.		
+	1 to: (aByteArray size)	do: [ :i | commandBuffer at: (i + 16) put: (aByteArray at: i) ]	.
+	
 	^commandBuffer
 	
 ]
@@ -198,12 +203,26 @@ PiGPIO >> runCommand: cmdNr p1: param1 p2: param2 [
 	"run the command nr with mutex control. assert an eventual error else return the result"	
 			
 	| answer result|
-	socketLock critical: 
-		[ socket sendData: (self packedCommand: cmdNr p1: param1 p2: param2).
-			answer := socket receiveData asByteArray ].
+	commandLock critical: 
+		[ commandStream nextPutAll: (self packedCommand: cmdNr p1: param1 p2: param2); flush.
+			answer := (commandStream next: 16) asByteArray ].
 	result := answer signedLongAt: 13.
 	self assert: (result >= 0) description: ('error code: ', result printString ) .
 	^answer allButFirst: 12
+]
+
+{ #category : #utilities }
+PiGPIO >> runCommandReturnBytes: cmdNr p1: param1 p2: param2 [
+	"run the command nr with mutex control. assert an eventual error else return the *extended* result"	
+			
+	| answer result|
+	commandLock critical: 
+		[ commandStream nextPutAll: (self packedCommand: cmdNr p1: param1 p2: param2); flush.
+			answer := (commandStream next: 16) asByteArray.
+			result := answer signedLongAt: 13.
+			self assert: (result >= 0) description: ('error code: ', result printString ) .
+			answer := (commandStream next: result) asByteArray].
+	^answer  "receiver should test wether the size is correct"
 ]
 
 { #category : #utilities }
@@ -211,12 +230,26 @@ PiGPIO >> runExtendedCommand: cmdNr p1: param1 p2: param2 bytes: aByteArray [
 	"run the command nr with mutex control. assert an eventual error else return the result"	
 			
 	| answer result|
-	socketLock critical: 
-		[ socket sendData: (self packedExtendedCommand: cmdNr p1: param1 p2: param2 bytes: aByteArray).
-			answer := socket receiveData asByteArray ].
+	commandLock critical: 
+		[ commandStream nextPutAll: (self packedExtendedCommand: cmdNr p1: param1 p2: param2 bytes: aByteArray); flush.
+			answer := (commandStream next: 16) asByteArray ].
 	result := answer signedLongAt: 13.
 	self assert: (result >= 0) description: ('error code: ', result printString ) .
 	^answer allButFirst: 12
+]
+
+{ #category : #utilities }
+PiGPIO >> runExtendedCommandReturnBytes: cmdNr p1: param1 p2: param2 bytes: aByteArray [
+	"run the command nr with mutex control. assert an eventual error else return the result"	
+			
+	| answer result|
+	commandLock critical: 
+		[ commandStream nextPutAll: (self packedExtendedCommand: cmdNr p1: param1 p2: param2 bytes: aByteArray); flush.
+			answer := (commandStream next: 16) asByteArray .
+			result := answer signedLongAt: 13.
+			self assert: (result >= 0) description: ('error code: ', result printString ) .
+			answer := (commandStream next: result) asByteArray ].
+	^answer
 ]
 
 { #category : #servos }
@@ -235,8 +268,5 @@ PiGPIO >> socket [
 PiGPIO >> version [ 
 	"request the version of the PIGPIO daemon
 		PIGPV = 26"
-	| answer |
-	socket sendData: (self packedCommand: 26 p1: 0 p2: 0).
-	answer := (socket receiveData) asByteArray.
-	^answer unsignedLongAt: 13
+	^(self runCommand: 26 p1: 0 p2: 0) unsignedLongAt: 1
 ]

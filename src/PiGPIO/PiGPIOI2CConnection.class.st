@@ -43,7 +43,7 @@ PiGPIOI2CConnection >> piGPIO: anObject [
 PiGPIOI2CConnection >> read16BitsAt: register [
 	"Read a word (2 bytes) at a register; returns a byte as lowest part of an integer
 	I2CRW = 63"
-	^self piGPIO runCommand: 63 p1: handle p2: register
+	^(self piGPIO runCommand: 63 p1: handle p2: register) unsignedLongAt: 1
 ]
 
 { #category : #accessing }
@@ -56,7 +56,7 @@ PiGPIOI2CConnection >> read8BitsArray: blockSize startingAt: reg [
 PiGPIOI2CConnection >> read8BitsAt: register [
 	"Read a byte at a register; returns a byte as lowest part of an integer
 	I2CRB = 61"
-	^self piGPIO runCommand: 61 p1: handle p2: register
+	^(self piGPIO runCommand: 61 p1: handle p2: register) unsignedLongAt: 1
 ]
 
 { #category : #accessing }
@@ -66,10 +66,9 @@ PiGPIOI2CConnection >> readDataBlock: count at: reg [
 	| result payLoad |
 	payLoad := ByteArray new: 4.
 	payLoad unsignedLongAt: 1 put: count.
-	result := self piGPIO runExtendedCommand: 67 p1: handle p2: reg bytes: payLoad.
-	self assert: ((result signedLongAt: 1) = count) description: 'incorrect byte count from I2CRI'.
-	^result allButFirst: 4
-	
+	result := self piGPIO runExtendedCommandReturnBytes: 67 p1: handle p2: reg bytes: payLoad.
+	self assert: ((result size) = count) description: 'incorrect byte count from I2CRI'.
+	^result 
 ]
 
 { #category : #accessing }
@@ -78,14 +77,6 @@ PiGPIOI2CConnection >> write16BitsAt: register data: aWord [
 	I2CRW = 63"
 	^self piGPIO runExtendedCommand: 63 p1: handle p2: register 
 			bytes: (ByteArray with: (aWord \\ 256) with: (aWord // 256) with: 0 with: 0 )
-]
-
-{ #category : #accessing }
-PiGPIOI2CConnection >> write16itsAt: register data: aWord [
-	"Read a byte at a register; returns a byte as lowest part of an integer
-	I2CRB = 64"
-	^self piGPIO runExtendedCommand: 62 p1: handle p2: register
-			bytes: (ByteArray with: (aWord \\ 256) with: (aWord // 256) with: 0 with: 0)
 ]
 
 { #category : #accessing }
