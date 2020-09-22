@@ -86,3 +86,11 @@ PiGPIOI2CConnection >> write8BitsAt: register data: aByte [
 	^self piGPIO runExtendedCommand: 62 p1: handle p2: register 
 				bytes: (ByteArray with: (aByte bitAnd: 16rFF) with: 0 with: 0 with: 0)
 ]
+
+{ #category : #writing }
+PiGPIOI2CConnection >> writeDataBlock: aByteArray at: aRegister [
+	"write a aByteArray to register
+	I2CWI = 68"
+	
+	self piGPIO runExtendedCommand: 68 p1: handle p2: aRegister bytes: aByteArray
+]

@@ -1,5 +1,15 @@
 "
 see http://abyz.me.uk/rpi/pigpio/sif.html for the PiGPIO socket interface. Command names and numeric values are defined their and always mentioned in the method comments.
+
+inspiration from python code.
+
+Basically there are four types of commmands:
+16-bytes command with 16 bytes answer (in last four) - runCommand:  p1:  p2: 
+16-bytes command with bigger answer - runCommandReturnBytes: p1: p2:
+big command with 16 bytes answer - runExtendedCommand: p1: p2: bytes:
+big command with big answer - runExtendedCommandReturnBytes: p1: p2: bytes:
+
+PIGPIO Python uses _pigpio_command_nolock in the case of big answers and implements the lock within each command.
 "
 Class {
 	#name : #PiGPIO,
@@ -134,6 +144,15 @@ PiGPIO >> pin: pinNr mode: modeNr [
 	 self runCommand: 0 p1: pinNr p2: modeNr
 ]
 
+{ #category : #'digital pins' }
+PiGPIO >> pin: aPinNr pullUpDnMode: zeroOneOrTwo [
+	"control the pullup pulldown resister when pin is in input mode
+	0 = OFF, 1 = DOWN, 2 = UP.
+	PUD = 2"
+	
+	self runCommand: 2 p1: aPinNr p2: zeroOneOrTwo
+]
+
 { #category : #pwm }
 PiGPIO >> pin: pinNr pwmFrequency: aFrequency [
 	"cset the PWM frequency to nearest possible value"
@@ -259,9 +278,14 @@ PiGPIO >> servoPulsewidthOnPin: pinNr [
 	^(self runCommand: 84 p1: pinNr p2: 0) signedLongAt: 1
 ]
 
-{ #category : #accessing }
-PiGPIO >> socket [
-	^ socket
+{ #category : #misc }
+PiGPIO >> trigger: aPinNr length: pulseLength level: oneOrZero [
+	"Send a trigger pulse to aPinNrO.  The GPIO is set to
+      level for pulseLength microseconds (0-100) and then reset to not level.
+	TRIG = 37"
+	 
+	self runExtendedCommand: 37 p1: aPinNr p2: pulseLength 
+				bytes: (ByteArray with: (oneOrZero bitAnd: 1) with: 0 with: 0 with: 0)
 ]
 
 { #category : #testing }
