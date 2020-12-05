@@ -28,7 +28,7 @@ Class {
 { #category : #'instance creation' }
 PiGPIO class >> onIP: anIPString port: aPortNumber [
 	^self new
-		connectOnIP: anIPString port: aPortNumber
+		connectOnIP: anIPString port: aPortNumber;
 		yourself
 ]
 
