@@ -91,7 +91,7 @@ PiGPIO >> isConnected [
 
 { #category : #'digital pins' }
 PiGPIO >> modeOfPin: pinNr [
-	"get the mode of pin pinNr. 0 meansoutput, 1 = input ...
+	"get the mode of pin pinNr. 0 means input, 1 = output ...
 		MODEG = 1"
 		
 	^(self runCommand: 1 p1: pinNr p2: 0) at: 1
