@@ -1,5 +1,5 @@
 "
-see http://abyz.me.uk/rpi/pigpio/sif.html for the PiGPIO socket interface. Command names and numeric values are defined their and always mentioned in the method comments.
+see http://abyz.me.uk/rpi/pigpio/sif.html for the PiGPIO socket interface. Command names and numeric values are defined there and always mentioned in the method comments.
 
 inspiration from python code.
 
@@ -10,6 +10,8 @@ big command with 16 bytes answer - runExtendedCommand: p1: p2: bytes:
 big command with big answer - runExtendedCommandReturnBytes: p1: p2: bytes:
 
 PIGPIO Python uses _pigpio_command_nolock in the case of big answers and implements the lock within each command.
+
+instance creation with IP address and port number (default 8888)
 "
 Class {
 	#name : #PiGPIO,

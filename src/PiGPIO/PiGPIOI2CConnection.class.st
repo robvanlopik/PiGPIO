@@ -59,6 +59,20 @@ PiGPIOI2CConnection >> read8BitsAt: register [
 	^(self piGPIO runCommand: 61 p1: handle p2: register) unsignedLongAt: 1
 ]
 
+{ #category : #'reading-primitive data' }
+PiGPIOI2CConnection >> readByte [
+	"read a single byte, directly without register
+	I2CRS = 59 - 16r3B - returns a number, not a byte"
+	^(self piGPIO runCommand: 59 p1: handle p2: 0) unsignedLongAt: 1
+]
+
+{ #category : #'reading-primitive data' }
+PiGPIOI2CConnection >> readByteAt: register [
+	"read a single byte, at register
+	I2CRB = 61 - 16r3B - returns a number, not a byte"
+	^(self piGPIO runCommand: 61 p1: handle p2: register) unsignedLongAt: 1
+]
+
 { #category : #accessing }
 PiGPIOI2CConnection >> readDataBlock: count at: reg [ 
 	"read count bytes of data starting at register reg"
@@ -71,18 +85,41 @@ PiGPIOI2CConnection >> readDataBlock: count at: reg [
 	^result 
 ]
 
+{ #category : #'reading-primitive data' }
+PiGPIOI2CConnection >> readWordAt: register [
+	"read a single word at register
+	I2CRW = 63 - 16r3B - returns a number, not a byte"
+	^(self piGPIO runCommand: 63 p1: handle p2: register) unsignedLongAt: 1
+]
+
 { #category : #accessing }
 PiGPIOI2CConnection >> write16BitsAt: register data: aWord [
-	"Read a word (2 bytes) at a register; returns a byte as lowest part of an integer
-	I2CRW = 63"
-	^self piGPIO runExtendedCommand: 63 p1: handle p2: register 
+	"WWrited a word (2 bytes) at a register; from low to high
+	I2CWW = 64"
+	^self piGPIO runExtendedCommand: 64 p1: handle p2: register 
 			bytes: (ByteArray with: (aWord \\ 256) with: (aWord // 256) with: 0 with: 0 )
 ]
 
 { #category : #accessing }
 PiGPIOI2CConnection >> write8BitsAt: register data: aByte [
-	"Read a byte at a register; returns a byte as lowest part of an integer
-	I2CRB = 62"
+	"write a byte at a register
+	I2CWB = 62"
+	^self piGPIO runExtendedCommand: 62 p1: handle p2: register 
+				bytes: (ByteArray with: (aByte bitAnd: 16rFF) with: 0 with: 0 with: 0)
+]
+
+{ #category : #accessing }
+PiGPIOI2CConnection >> writeByte: aByte [
+	"write a byte without  a register
+	I2CWS = 60"
+	^self piGPIO runCommand: 62 p1: handle p2: aByte
+			
+]
+
+{ #category : #accessing }
+PiGPIOI2CConnection >> writeByteAt: register data: aByte [
+	"write a byte at a register
+	I2CWB = 62"
 	^self piGPIO runExtendedCommand: 62 p1: handle p2: register 
 				bytes: (ByteArray with: (aByte bitAnd: 16rFF) with: 0 with: 0 with: 0)
 ]
@@ -93,4 +130,12 @@ PiGPIOI2CConnection >> writeDataBlock: aByteArray at: aRegister [
 	I2CWI = 68"
 	
 	self piGPIO runExtendedCommand: 68 p1: handle p2: aRegister bytes: aByteArray
+]
+
+{ #category : #accessing }
+PiGPIOI2CConnection >> writeWordAt: register data: aWord [
+	"WWrited a word (2 bytes) at a register; from low to high
+	I2CWW = 64"
+	^self piGPIO runExtendedCommand: 64 p1: handle p2: register 
+			bytes: (ByteArray with: (aWord \\ 256) with: (aWord // 256) with: 0 with: 0 )
 ]
