@@ -11,6 +11,16 @@ Class {
 	#category : #PiGPIO
 }
 
+{ #category : #accessing }
+PiGPIOI2CConnection >> blockProcessCallAt: register data: data [
+	"	Writes data bytes to the specified register of the device
+      associated with handle and reads a device specified number
+      of bytes of data in return.
+	I2CPK = 70"
+
+	^(self piGPIO runExtendedCommandReturnBytes: 70 p1: handle p2: register bytes: data) 
+]
+
 { #category : #'initialize-release' }
 PiGPIOI2CConnection >> close [
 	"close the I2C connection
@@ -37,6 +47,16 @@ PiGPIOI2CConnection >> piGPIO [
 { #category : #accessing }
 PiGPIOI2CConnection >> piGPIO: anObject [
 	piGPIO := anObject
+]
+
+{ #category : #accessing }
+PiGPIOI2CConnection >> processCallAt: register data: aWord [
+	"Writes 16 bits of data to the specified register of the device
+      associated with handle and reads 16 bits of data in return"
+	"I2CPC = 69 "
+	| payLoad |
+	payLoad := ByteArray new with: (aWord \\ 256) with: (aWord // 256) with: 0 with: 0.
+	^(self piGPIO runExtendedCommand: 69 p1: handle p2: register bytes: payLoad) unsignedLongAt: 1
 ]
 
 { #category : #accessing }
@@ -75,13 +95,35 @@ PiGPIOI2CConnection >> readByteAt: register [
 
 { #category : #accessing }
 PiGPIOI2CConnection >> readDataBlock: count at: reg [ 
-	"read count bytes of data starting at register reg"
+	"read count bytes of data starting at register reg. Python i2c_read_i2c_block_data()"
 	"I2CRI = 67"
 	| result payLoad |
 	payLoad := ByteArray new: 4.
 	payLoad unsignedLongAt: 1 put: count.
 	result := self piGPIO runExtendedCommandReturnBytes: 67 p1: handle p2: reg bytes: payLoad.
-	self assert: ((result size) = count) description: 'incorrect byte count from I2CRI'.
+	self assert: ((result size) = count) description: 'incorrect byte count returned from I2CRI'.
+	^result 
+]
+
+{ #category : #accessing }
+PiGPIOI2CConnection >> readDataBlockAt: reg [ 
+	"read  bytes of data starting at register reg. The device determines how many bytes are returned
+	in Python i2c_read_block_data"
+	"I2CRK = 65 -- returns a byte array"
+	| result  |
+	
+	result := self piGPIO runCommandReturnBytes: 65 p1: handle p2: reg.
+	^result 
+]
+
+{ #category : #'as yet unclassified' }
+PiGPIOI2CConnection >> readDevice: count [ 
+	"Returns count bytes read from the raw device
+	I2CRD = 56"
+	| result |
+	
+	result := self piGPIO runCommandReturnBytes: 56 p1: handle p2: count .
+	self assert: ((result size) = count) description: 'incorrect byte count returned from I2CRD'.
 	^result 
 ]
 
@@ -126,10 +168,25 @@ PiGPIOI2CConnection >> writeByteAt: register data: aByte [
 
 { #category : #writing }
 PiGPIOI2CConnection >> writeDataBlock: aByteArray at: aRegister [
-	"write a aByteArray to register
+	"write a aByteArray to register with count between reg and data on bus
+	I2CWK = 66"
+	
+	self piGPIO runExtendedCommand: 66 p1: handle p2: aRegister bytes: aByteArray
+]
+
+{ #category : #writing }
+PiGPIOI2CConnection >> writeDataBlockNoCount: aByteArray at: aRegister [
+	"write a aByteArray to register, data directly follows register. Python i2c_write_i2c_block_data()
 	I2CWI = 68"
 	
 	self piGPIO runExtendedCommand: 68 p1: handle p2: aRegister bytes: aByteArray
+]
+
+{ #category : #writing }
+PiGPIOI2CConnection >> writeDevice: data [
+	"Writes the data bytes to the raw device
+	I2CWD = 57"
+	self piGPIO runExtendedCommand: 57 p1: handle p2: 0 bytes: data
 ]
 
 { #category : #accessing }
