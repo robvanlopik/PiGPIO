@@ -8,7 +8,8 @@ Class {
 		'handle',
 		'monitor',
 		'eventLevels',
-		'lastLevel'
+		'lastLevel',
+		'listenProcess'
 	],
 	#classInstVars : [
 		'stop'
@@ -69,7 +70,8 @@ PiGPIOEventLoop >> readBank1 [
 PiGPIOEventLoop >> start [ 
 	"this was called from PiGPIO "
 	"we can suppose the eventStream is opened."
-	lastLevel := self getLastLevel.
+	lastLevel := 0.
+	listenProcess := [ self processEvents ] forkNamed: 'PiGPIO event loop'
 ]
 
 { #category : #accessing }

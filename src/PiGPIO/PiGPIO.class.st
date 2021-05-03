@@ -332,6 +332,22 @@ PiGPIO >> stopEventLoop [
 	eventListener stop
 ]
 
+{ #category : #'event processing' }
+PiGPIO >> tickDiffFrom: firstTick to: lastTick [
+	"return the difference in ticks, correcting for rollover"
+	| diff |
+	diff := lastTick - firstTick.
+	(diff < 0)ifTrue: [ diff := diff + (1 bitShift: 32) ].
+	^diff
+]
+
+{ #category : #'event processing' }
+PiGPIO >> ticks [
+	"return the ticks of thee Pi clock. 32 bits with rollover after 71.6 minutes 
+	code TICK = 16, return unsigned long"
+		^self runCommandUnsignedReturn: 16 p1: 0 p2: 0
+]
+
 { #category : #misc }
 PiGPIO >> trigger: aPinNr length: pulseLength level: oneOrZero [
 	"Send a trigger pulse to aPinNrO.  The GPIO is set to
