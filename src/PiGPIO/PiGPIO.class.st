@@ -17,12 +17,11 @@ Class {
 	#name : #PiGPIO,
 	#superclass : #Object,
 	#instVars : [
-		'socket',
 		'commandStream',
 		'commandLock',
-		'socketLock',
 		'ip',
-		'port'
+		'port',
+		'eventListener'
 	],
 	#category : #PiGPIO
 }
@@ -32,6 +31,11 @@ PiGPIO class >> onIP: anIPString port: aPortNumber [
 	^self new
 		connectOnIP: anIPString port: aPortNumber;
 		yourself
+]
+
+{ #category : #'event processing' }
+PiGPIO >> cancelWatchdogOnPin: aPinNumber [
+	self setWatchdogOnPin: aPinNumber timeout: 0
 ]
 
 { #category : #'as yet unclassified' }
@@ -46,17 +50,13 @@ PiGPIO >> connectOnIP: anIPString port: aPortNumber [
 	"if the socket cannot be opened, store nil"	
 			
 	self isConnected ifTrue: [ ^self ].
-	"socket := Socket newTCP.
-	ip := NetNameResolver addressForName: anIPString.
-	port := aPortNumber.
-	socket connectTo: ip port: port;
-		waitForConnectionFor: 10.
-	socket isConnected ifFalse: [ socket := nil ].
-	socketLock := Mutex new."
+	
 	commandStream := SocketStream openConnectionToHostNamed: anIPString port: aPortNumber.
 	commandStream isConnected ifFalse: [ commandStream := nil ].
 	commandStream binary.
 	commandLock := Mutex new.
+	ip := anIPString.
+	port := aPortNumber
 	
 		
 ]
@@ -88,7 +88,7 @@ PiGPIO >> hwVersion [
 
 { #category : #testing }
 PiGPIO >> isConnected [
-	^socket notNil
+	^commandStream notNil
 ]
 
 { #category : #'digital pins' }
@@ -187,6 +187,18 @@ PiGPIO >> pin: pinNr servoPulsewidth: width [
 	^(self runCommand: 8 p1: pinNr p2: width) signedLongAt: 1
 ]
 
+{ #category : #'event processing' }
+PiGPIO >> pinsToWatch: aList [
+	"send array with the pin numbers to watch for level changes"
+	"command: NB = 19"
+	| handle mask|
+	mask := 0.
+	aList do: [ :each | mask bitAt: (each - 1) put: 1 ].
+	handle := eventListener handle.
+	handle ifNil: [ self error: 'no eventloop running' ].
+	self runCommand: 19 p1: handle p2: mask.
+]
+
 { #category : #pwm }
 PiGPIO >> pwmFrequencyOnPin: aPinNr [
 	"request PWF frequency of the pin
@@ -219,6 +231,13 @@ PiGPIO >> pwmValueForPin: pinNr [
 	^(self runCommand: 83 p1: pinNr p2: 0) signedLongAt: 1
 ]
 
+{ #category : #'as yet unclassified' }
+PiGPIO >> readBank1 [
+	"return a bitmmap of hign pins in bank 1
+	BR1 = 0 -- Te result is unsigned 32 bits integer, so cannot use #runCommand"
+	^self runCommandUnsignedReturn: 0 p1: 0 p2: 0
+]
+
 { #category : #utilities }
 PiGPIO >> runCommand: cmdNr p1: param1 p2: param2 [
 	"run the command nr with mutex control. assert an eventual error else return the result"	
@@ -244,6 +263,18 @@ PiGPIO >> runCommandReturnBytes: cmdNr p1: param1 p2: param2 [
 			self assert: (result >= 0) description: ('error code: ', result printString ) .
 			answer := (commandStream next: result) asByteArray].
 	^answer  "receiver should test wether the size is correct"
+]
+
+{ #category : #utilities }
+PiGPIO >> runCommandUnsignedReturn: cmdNr p1: param1 p2: param2 [
+	"run the command nr with mutex control. assert an eventual error else return the result as unsigned integer"	
+			
+	| answer result|
+	commandLock critical: 
+		[ commandStream nextPutAll: (self packedCommand: cmdNr p1: param1 p2: param2); flush.
+			answer := (commandStream next: 16) asByteArray ].
+	result := answer unsignedLongAt: 13.
+	^result
 ]
 
 { #category : #utilities }
@@ -278,6 +309,27 @@ PiGPIO >> servoPulsewidthOnPin: pinNr [
 	"get the servo pulse width of the pin
 	GPW = 84"
 	^(self runCommand: 84 p1: pinNr p2: 0) signedLongAt: 1
+]
+
+{ #category : #'event processing' }
+PiGPIO >> setWatchdogOnPin: aPinNumber timeout: duration [
+	"set a watchdog on the specified pin; is the pin hasn't changed during the next duration
+	 milliseconds a PiGPIOWatchdog announcement will be triggered; 
+	to cancel the watchdog set timeout to 0. Timeout maximum is 60000.
+	code is WDOG = 9"
+	self runCommand: 9 p1: aPinNumber p2: duration
+	
+]
+
+{ #category : #'event processing' }
+PiGPIO >> startEventLoop [
+	eventListener := PiGPIOEventLoop new openStreamOn: ip port: port.
+	eventListener start.
+]
+
+{ #category : #'event processing' }
+PiGPIO >> stopEventLoop [
+	eventListener stop
 ]
 
 { #category : #misc }
