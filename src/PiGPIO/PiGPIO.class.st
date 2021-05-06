@@ -193,9 +193,10 @@ PiGPIO >> pinsToWatch: aList [
 	"command: NB = 19"
 	| handle mask|
 	mask := 0.
-	aList do: [ :each | mask bitAt: (each - 1) put: 1 ].
+	aList do: [ :pin | mask := mask bitOr: (1 bitShift: pin) ].
 	handle := eventListener handle.
 	handle ifNil: [ self error: 'no eventloop running' ].
+	eventListener bitsToMonitor: mask.
 	self runCommand: 19 p1: handle p2: mask.
 ]
 
@@ -233,9 +234,15 @@ PiGPIO >> pwmValueForPin: pinNr [
 
 { #category : #'as yet unclassified' }
 PiGPIO >> readBank1 [
-	"return a bitmmap of hign pins in bank 1
-	BR1 = 0 -- Te result is unsigned 32 bits integer, so cannot use #runCommand"
-	^self runCommandUnsignedReturn: 0 p1: 0 p2: 0
+	"return a bitmmap of high pins in bank 1
+	BR1 = 10 -- The result is unsigned 32 bits integer, so cannot use #runCommand"
+	^self runCommandUnsignedReturn: 10 p1: 0 p2: 0
+]
+
+{ #category : #'announce requests' }
+PiGPIO >> removeSubscription: aSubscription [
+		eventListener announcer removeSubscription: aSubscription 
+	
 ]
 
 { #category : #utilities }
@@ -363,4 +370,9 @@ PiGPIO >> version [
 	"request the version of the PIGPIO daemon
 		PIGPV = 26"
 	^(self runCommand: 26 p1: 0 p2: 0) unsignedLongAt: 1
+]
+
+{ #category : #'announce requests' }
+PiGPIO >> when: anEvent do: aBlock [
+	eventListener announcer when: anEvent do: aBlock
 ]

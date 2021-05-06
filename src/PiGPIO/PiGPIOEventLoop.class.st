@@ -7,9 +7,10 @@ Class {
 		'running',
 		'handle',
 		'monitor',
-		'eventLevels',
-		'lastLevel',
-		'listenProcess'
+		'lastLevels',
+		'listenProcess',
+		'events',
+		'announcer'
 	],
 	#classInstVars : [
 		'stop'
@@ -17,19 +18,49 @@ Class {
 	#category : #PiGPIO
 }
 
+{ #category : #accessing }
+PiGPIOEventLoop >> announcer [
+	^announcer
+]
+
+{ #category : #'as yet unclassified' }
+PiGPIOEventLoop >> bitsToMonitor: bitmask [
+	"can i do this without mutex?"
+	monitor := bitmask
+]
+
+{ #category : #accessing }
+PiGPIOEventLoop >> getHandle [
+	"get a handle  from the eventStream
+	command NOIB = 99	"
+		| answer result |
+	eventStream nextPutAll: (self packedCommand: 99 p1: 0 p2: 0); flush.
+	answer := (eventStream next: 16) asByteArray .
+	result := answer unsignedLongAt: 13.
+	^result
+]
+
+{ #category : #accessing }
+PiGPIOEventLoop >> handle [
+	^handle
+]
+
 { #category : #initialization }
 PiGPIOEventLoop >> initialize [ 
 	super initialize.
 	running := false.
 	monitor := 0. "bits to monitor"
-	eventLevels := 0. "events to monitor"
-	running := false
+	events := 0. "events to monitor"
+	announcer := Announcer new
 	
 ]
 
 { #category : #initialization }
 PiGPIOEventLoop >> openStreamOn: anIP port: aPortNumber [ 
 	eventStream := SocketStream openConnectionToHostNamed: anIP port: aPortNumber.
+	eventStream binary.
+	eventStream timeout: 70. "In principle a message with flag ALIVE should arrive every 60 seconds"
+	
 ]
 
 { #category : #utilities }
@@ -45,11 +76,25 @@ PiGPIOEventLoop >> packedCommand: cmdNr p1: param1 p2: param2 [
 
 { #category : #accessing }
 PiGPIOEventLoop >> processEvents [ 
-	"loop to get event messages from the eventStream"
-	| message seq flags ticks levels |
+	"loop to get event messages from the eventStream and fire announcements"
+	| message seq flags ticks levels changed|
 		[ running ] whileTrue: [  
 		message := eventStream next: 12.
-		message traceCr. ]
+		seq := message unsignedShortAt: 1.
+		flags := message unsignedShortAt: 3.
+		ticks := message unsignedLongAt: 5.
+		levels := message unsignedLongAt: 9.
+		"let's see what we have got"
+		(flags = 0) ifTrue: [ 
+			changed := lastLevels bitXor: levels. "which bits changed?"
+			lastLevels := levels.
+			changed := changed bitAnd: monitor. "changed AND being monitored"
+			0 to: 31 do: [ :pinNr | (changed bitAt: pinNr) = 1 ifTrue:
+				[ announcer announce: (PiGPIOPinChange new pinNr: pinNr; 
+						newLevel: (levels bitAt: pinNr); tick: ticks; yourself ) ]
+			]
+		
+		 ]]
 ]
 
 { #category : #'as yet unclassified' }
@@ -61,7 +106,7 @@ PiGPIOEventLoop >> readBank1 [
 	answer := (eventStream next: 16) asByteArray .
 	result := answer signedLongAt: 13.
 	self assert: (result >= 0) description: ('error code: ', result printString ) .
-	^(answer allButFirst: 12) unsignedLong at: 1
+	^(answer allButFirst: 12) unsignedLongAt: 1
 	 
 	
 ]
@@ -70,7 +115,9 @@ PiGPIOEventLoop >> readBank1 [
 PiGPIOEventLoop >> start [ 
 	"this was called from PiGPIO "
 	"we can suppose the eventStream is opened."
-	lastLevel := 0.
+	lastLevels := self readBank1 .
+	handle := self getHandle.
+	running := true.
 	listenProcess := [ self processEvents ] forkNamed: 'PiGPIO event loop'
 ]
 
