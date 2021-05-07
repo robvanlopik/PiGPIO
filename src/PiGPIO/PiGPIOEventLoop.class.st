@@ -89,7 +89,7 @@ PiGPIOEventLoop >> processEvents [
 			changed := lastLevels bitXor: levels. "which bits changed?"
 			lastLevels := levels.
 			changed := changed bitAnd: monitor. "changed AND being monitored"
-			0 to: 31 do: [ :pinNr | (changed bitAt: pinNr) = 1 ifTrue:
+			0 to: 31 do: [ :pinNr | (changed bitAt: (pinNr + 1) = 1) ifTrue:
 				[ announcer announce: (PiGPIOPinChange new pinNr: pinNr; 
 						newLevel: (levels bitAt: pinNr); tick: ticks; yourself ) ]
 			]
