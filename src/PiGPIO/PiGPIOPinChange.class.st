@@ -1,6 +1,6 @@
 "
-I announce the change of a pin level Thesubscriber can retrieve three items: 
-pin - the pin number 
+I announce the change of a pin level The subscriber can retrieve three items: 
+pinNr - the pin number 
 newLevel - the now pin level (0, 1)
 tick - the value of the pigpiod clock (rolllover after ca 70 minutes; use PiGPIO>> tickDiffFrom:to: to calculate elapsed times)
 "

@@ -62,6 +62,14 @@ PiGPIO >> connectOnIP: anIPString port: aPortNumber [
 ]
 
 { #category : #'digital pins' }
+PiGPIO >> debouncePin: pinNr duration: micros [
+	"add a glitch filter for the duration of micros microseconds (0 - 300000
+	this does not affect read, only pinchanges
+	code FG = 97"
+	self runCommand: 97 p1: pinNr  p2: micros .
+]
+
+{ #category : #'digital pins' }
 PiGPIO >> digitalRead: pinNr [
 	"readd the digital pin pinNr	
 	READ = 3"	
