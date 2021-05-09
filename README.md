@@ -32,4 +32,6 @@ Now the incantation is:
 myRemotePi := RpiBoard3B driver: (RpiPiGPIODriver onIP: '192.168.1.55' port: 8888)
 ```
 
-Not all functions of the pigpiod daemon are implemented, but some will be added in the near future
+#### Announcements
+
+Callbacks have been implemented using pharo's announcement framework.
