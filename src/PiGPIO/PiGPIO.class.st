@@ -86,6 +86,20 @@ PiGPIO >> digitalWrite: pinNr value: oneOrZero [
 	self runCommand: 4 p1: pinNr p2: data
 ]
 
+{ #category : #'event processing' }
+PiGPIO >> eventsToWatch: aList [
+	"send array with the event numbers to watch for event triggers 
+	"
+	"command: EVM = 115"
+	| handle mask|
+	mask := 0.
+	aList do: [ :ev | mask := mask bitOr: (1 bitShift: ev) ].
+	handle := eventListener handle.
+	handle ifNil: [ self error: 'no eventloop running' ].
+	eventListener eventsToMonitor: mask.
+	self runCommand: 115 p1: handle p2: mask.
+]
+
 { #category : #testing }
 PiGPIO >> hwVersion [
 	"return the hard version of the board"
@@ -375,7 +389,10 @@ PiGPIO >> trigger: aPinNr length: pulseLength level: oneOrZero [
 
 { #category : #'event processing' }
 PiGPIO >> triggerEvent: eventNumber [
-
+	"trigger an event (nr between 0 and 31). Only effective when this 
+	same event is also being watched, #eventsToWatch
+	code EVT = 116"
+	self runCommand: 116 p1: eventNumber  p2: 0.
 ]
 
 { #category : #testing }

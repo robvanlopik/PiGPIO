@@ -7,8 +7,32 @@ Class {
 	#name : #PiGPIOEvent,
 	#superclass : #Announcement,
 	#instVars : [
-		'pinNr',
+		'eventNr',
 		'ticks'
 	],
 	#category : #PiGPIO
 }
+
+{ #category : #accessing }
+PiGPIOEvent >> eventNr [
+
+	^ eventNr
+]
+
+{ #category : #accessing }
+PiGPIOEvent >> eventNr: anObject [
+
+	eventNr := anObject
+]
+
+{ #category : #accessing }
+PiGPIOEvent >> ticks [
+
+	^ ticks
+]
+
+{ #category : #accessing }
+PiGPIOEvent >> ticks: anObject [
+
+	ticks := anObject
+]

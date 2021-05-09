@@ -43,6 +43,13 @@ PiGPIOEventLoop >> bitsToMonitor: bitmask [
 	monitor := bitmask
 ]
 
+{ #category : #'as yet unclassified' }
+PiGPIOEventLoop >> eventsToMonitor: bitMask [
+	"selection of possible events to report"	
+			
+	events := bitMask
+]
+
 { #category : #accessing }
 PiGPIOEventLoop >> getHandle [
 	"get a handle  from the eventStream
