@@ -106,9 +106,20 @@ PiGPIOEventLoop >> processEvents [
 			0 to: 31 do: [ :pinNr | (changed bitAt: (pinNr + 1) = 1) ifTrue:
 				[ announcer announce: (PiGPIOPinChange new pinNr: pinNr; 
 						newLevel: (levels bitAt: pinNr); tick: ticks; yourself ) ]
-			]
+				]	.
+			^self].
+		"test for watchdog"
+		((flags bitAnd: (1 << 5)) ~= 0) ifTrue: [
+			 announcer announce: (PiGPIOWatchdog new pinNr: (flags bitAnd: 161F);
+																				tick: ticks; yourself).
+			^self].
+		"test for event"
+		((flags bitAnd: (1 << 7)) ~= 0) ifTrue: [
+			 announcer announce: (PiGPIOEvent new pinNr: (flags bitAnd: 161F);
+																				tick: ticks; yourself).
+			^self].
 		
-		 ]]
+		]
 ]
 
 { #category : #'as yet unclassified' }

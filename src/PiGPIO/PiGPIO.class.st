@@ -373,6 +373,11 @@ PiGPIO >> trigger: aPinNr length: pulseLength level: oneOrZero [
 				bytes: (ByteArray with: (oneOrZero bitAnd: 1) with: 0 with: 0 with: 0)
 ]
 
+{ #category : #'event processing' }
+PiGPIO >> triggerEvent: eventNumber [
+
+]
+
 { #category : #testing }
 PiGPIO >> version [ 
 	"request the version of the PIGPIO daemon
