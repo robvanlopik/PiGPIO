@@ -8,7 +8,7 @@ Class {
 	#superclass : #Announcement,
 	#instVars : [
 		'eventNr',
-		'ticks'
+		'tick'
 	],
 	#category : #PiGPIO
 }
@@ -26,13 +26,13 @@ PiGPIOEvent >> eventNr: anObject [
 ]
 
 { #category : #accessing }
-PiGPIOEvent >> ticks [
+PiGPIOEvent >> tick [
 
-	^ ticks
+	^ tick
 ]
 
 { #category : #accessing }
-PiGPIOEvent >> ticks: anObject [
+PiGPIOEvent >> tick: anObject [
 
-	ticks := anObject
+	tick := anObject
 ]

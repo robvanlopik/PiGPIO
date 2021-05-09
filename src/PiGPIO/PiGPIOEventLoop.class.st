@@ -117,12 +117,12 @@ PiGPIOEventLoop >> processEvents [
 			^self].
 		"test for watchdog"
 		((flags bitAnd: (1 << 5)) ~= 0) ifTrue: [
-			 announcer announce: (PiGPIOWatchdog new pinNr: (flags bitAnd: 161F);
+			 announcer announce: (PiGPIOWatchdog new pinNr: (flags bitAnd: 16r1F);
 																				tick: ticks; yourself).
 			^self].
 		"test for event"
 		((flags bitAnd: (1 << 7)) ~= 0) ifTrue: [
-			 announcer announce: (PiGPIOEvent new pinNr: (flags bitAnd: 161F);
+			 announcer announce: (PiGPIOEvent new eventNr: (flags bitAnd: 16r1F);
 																				tick: ticks; yourself).
 			^self].
 		
