@@ -133,14 +133,14 @@ PiGPIOEventLoop >> pinsToMonitor: bitmask [
 PiGPIOEventLoop >> processEvents [ 
 	"loop to get event messages from the eventStream and fire announcements"
 	| message seq flags ticks levels |
-		[ running ] whileTrue: [  
+		[[ running ] whileTrue: [  
 			message := eventStream next: 12.
 			seq := message unsignedShortAt: 1.
 			flags := message unsignedShortAt: 3.
 			ticks := message unsignedLongAt: 5.
 			levels := message unsignedLongAt: 9.
 			self emitAnnouncements: flags levels: levels ticks: ticks.
-		]
+		] ] ensure: [  eventStream close ] 
 ]
 
 { #category : #'as yet unclassified' }
@@ -169,6 +169,10 @@ PiGPIOEventLoop >> start [
 
 { #category : #accessing }
 PiGPIOEventLoop >> stop [
+	"stop the eventloop and sclose the stream. Also tell PiGPIO to stop notifications
+	with command: CMD_NC = 21"
+	
+	eventStream nextPutAll: (self packedCommand: 21 p1: handle  p2: 0).
 	running := false.
 	
 
