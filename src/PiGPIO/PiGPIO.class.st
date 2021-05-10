@@ -218,7 +218,7 @@ PiGPIO >> pinsToWatch: aList [
 	aList do: [ :pin | mask := mask bitOr: (1 bitShift: pin) ].
 	handle := eventListener handle.
 	handle ifNil: [ self error: 'no eventloop running' ].
-	eventListener bitsToMonitor: mask.
+	eventListener pinsToMonitor: mask.
 	self runCommand: 19 p1: handle p2: mask.
 ]
 

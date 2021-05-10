@@ -19,11 +19,11 @@ Class {
 		'eventStream',
 		'running',
 		'handle',
-		'monitor',
 		'lastLevels',
 		'listenProcess',
-		'events',
-		'announcer'
+		'announcer',
+		'pinsToMonitor',
+		'eventsToMonitor'
 	],
 	#classInstVars : [
 		'stop'
@@ -37,16 +37,45 @@ PiGPIOEventLoop >> announcer [
 ]
 
 { #category : #'as yet unclassified' }
-PiGPIOEventLoop >> bitsToMonitor: bitmask [
-	"can i do this without mutex?"
-	monitor := bitmask
+PiGPIOEventLoop >> emitAnnouncements: flags levels: levels ticks: ticks [
+	"look at the flags and emit announcements. These are made in a different thread 
+	to avoid blocking the wvent listener	"
+			| changed |
+	(flags = 0) ifTrue: [ 
+		changed := lastLevels bitXor: levels. "which bits changed?"
+		lastLevels := levels.
+		changed := changed bitAnd: pinsToMonitor. "changed AND being monitored"
+		0 to: 31 do: [ :pinNr | ((changed bitAt: (pinNr + 1)) = 1) ifTrue:
+			[[ announcer announce: (PiGPIOPinChange new pinNr: pinNr; 
+				newLevel: (levels bitAt: (pinNr + 1)); tick: ticks; yourself ) ] 
+					forkAt: Processor userInterruptPriority ].
+			].
+			^self].
+		
+		"test for watchdog"
+		((flags bitAnd: (1 << 5)) ~= 0) ifTrue: [[
+			 announcer announce: (PiGPIOWatchdog new pinNr: (flags bitAnd: 16r1F);
+				tick: ticks; yourself)]
+					forkAt: Processor userInterruptPriority .
+			^self].
+		
+		"test for event"
+		((flags bitAnd: (1 << 7)) ~= 0) ifTrue: [[
+			 announcer announce: (PiGPIOEvent new 
+				eventNr: (flags bitAnd: 16r1F); tick: ticks; yourself).]
+					forkAt: Processor userInterruptPriority .
+			^self].
+		
+		"show the ALIVE message. SHOULD BE REMOVED"
+		((flags bitAnd: (1 << 6) ) ~= 0) ifTrue: [ 
+			('KeepAlive ' , levels hex) traceCr. ^self].
 ]
 
 { #category : #'as yet unclassified' }
 PiGPIOEventLoop >> eventsToMonitor: bitMask [
 	"selection of possible events to report"	
 			
-	events := bitMask
+	eventsToMonitor := bitMask
 ]
 
 { #category : #accessing }
@@ -69,8 +98,8 @@ PiGPIOEventLoop >> handle [
 PiGPIOEventLoop >> initialize [ 
 	super initialize.
 	running := false.
-	monitor := 0. "bits to monitor"
-	events := 0. "events to monitor"
+	pinsToMonitor := 0. "bits to monitor"
+	eventsToMonitor := 0. "events to monitor"
 	announcer := Announcer new
 	
 ]
@@ -94,37 +123,23 @@ PiGPIOEventLoop >> packedCommand: cmdNr p1: param1 p2: param2 [
 	^commandBuffer
 ]
 
+{ #category : #'as yet unclassified' }
+PiGPIOEventLoop >> pinsToMonitor: bitmask [
+	"can i do this without mutex?"
+	pinsToMonitor := bitmask
+]
+
 { #category : #accessing }
 PiGPIOEventLoop >> processEvents [ 
 	"loop to get event messages from the eventStream and fire announcements"
-	| message seq flags ticks levels changed|
+	| message seq flags ticks levels |
 		[ running ] whileTrue: [  
-		message := eventStream next: 12.
-		seq := message unsignedShortAt: 1.
-		flags := message unsignedShortAt: 3.
-		ticks := message unsignedLongAt: 5.
-		levels := message unsignedLongAt: 9.
-		"let's see what we have got"
-		(flags = 0) ifTrue: [ 
-			changed := lastLevels bitXor: levels. "which bits changed?"
-			lastLevels := levels.
-			changed := changed bitAnd: monitor. "changed AND being monitored"
-			0 to: 31 do: [ :pinNr | ((changed bitAt: (pinNr + 1)) = 1) ifTrue:
-				[ announcer announce: (PiGPIOPinChange new pinNr: pinNr; 
-						newLevel: (levels bitAt: pinNr); tick: ticks; yourself ) ]
-				]	.
-			^self].
-		"test for watchdog"
-		((flags bitAnd: (1 << 5)) ~= 0) ifTrue: [
-			 announcer announce: (PiGPIOWatchdog new pinNr: (flags bitAnd: 16r1F);
-																				tick: ticks; yourself).
-			^self].
-		"test for event"
-		((flags bitAnd: (1 << 7)) ~= 0) ifTrue: [
-			 announcer announce: (PiGPIOEvent new eventNr: (flags bitAnd: 16r1F);
-																				tick: ticks; yourself).
-			^self].
-		
+			message := eventStream next: 12.
+			seq := message unsignedShortAt: 1.
+			flags := message unsignedShortAt: 3.
+			ticks := message unsignedLongAt: 5.
+			levels := message unsignedLongAt: 9.
+			self emitAnnouncements: flags levels: levels ticks: ticks.
 		]
 ]
 
@@ -149,7 +164,7 @@ PiGPIOEventLoop >> start [
 	lastLevels := self readBank1 .
 	handle := self getHandle.
 	running := true.
-	listenProcess := [ self processEvents ] forkNamed: 'PiGPIO event loop'
+	listenProcess := [ self processEvents ] forkAt: Processor lowIOPriority  named: 'PiGPIO event loop'
 ]
 
 { #category : #accessing }
