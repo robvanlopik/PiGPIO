@@ -68,7 +68,7 @@ PiGPIOEventLoop >> emitAnnouncements: flags levels: levels ticks: ticks [
 		
 		"show the ALIVE message. SHOULD BE REMOVED"
 		((flags bitAnd: (1 << 6) ) ~= 0) ifTrue: [ 
-			('KeepAlive ' , levels hex) traceCr. ^self].
+			(Time now print24, 'KeepAlive ') traceCr. ^self].
 ]
 
 { #category : #'as yet unclassified' }
@@ -135,11 +135,13 @@ PiGPIOEventLoop >> processEvents [
 	| message seq flags ticks levels |
 		[[ running ] whileTrue: [  
 			message := eventStream next: 12.
+			(message size ~= 12) ifTrue: [ (Time now print24, 'wrong size') traceCr ]
+			ifFalse: [ 
 			seq := message unsignedShortAt: 1.
 			flags := message unsignedShortAt: 3.
 			ticks := message unsignedLongAt: 5.
 			levels := message unsignedLongAt: 9.
-			self emitAnnouncements: flags levels: levels ticks: ticks.
+			self emitAnnouncements: flags levels: levels ticks: ticks.]
 		] ] ensure: [  eventStream close ] 
 ]
 
