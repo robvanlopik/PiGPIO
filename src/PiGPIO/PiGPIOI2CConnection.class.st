@@ -131,7 +131,15 @@ PiGPIOI2CConnection >> readDevice: count [
 PiGPIOI2CConnection >> readWordAt: register [
 	"read a single word at register
 	I2CRW = 63 - 16r3B - returns a number, not a byte"
-	^(self piGPIO runCommand: 63 p1: handle p2: register) unsignedLongAt: 1
+	^(self piGPIO runCommand: 63 p1: handle p2: register) unsignedShortAt: 1
+]
+
+{ #category : #'reading-primitive data' }
+PiGPIOI2CConnection >> readWordBigEndianAt: register [
+	"read a single word at register
+	I2CRW = 63 - 16r3B - returns a number, not a byte"
+	^(self piGPIO runCommand: 63 p1: handle p2: register) 
+									unsignedShortAt: 1 bigEndian: true
 ]
 
 { #category : #accessing }
@@ -195,4 +203,12 @@ PiGPIOI2CConnection >> writeWordAt: register data: aWord [
 	I2CWW = 64"
 	^self piGPIO runExtendedCommand: 64 p1: handle p2: register 
 			bytes: (ByteArray with: (aWord \\ 256) with: (aWord // 256) with: 0 with: 0 )
+]
+
+{ #category : #accessing }
+PiGPIOI2CConnection >> writeWordBigEndianAt: register data: aWord [
+	"WWrited a word (2 bytes) at a register; from low to high
+	I2CWW = 64"
+	^self piGPIO runExtendedCommand: 64 p1: handle p2: register 
+			bytes: (ByteArray with: (aWord // 256) with: (aWord \\ 256) with: 0 with: 0 )
 ]
