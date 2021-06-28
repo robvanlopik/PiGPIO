@@ -36,7 +36,7 @@ PiGPIOEventLoop >> announcer [
 	^announcer
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'announcement handling' }
 PiGPIOEventLoop >> emitAnnouncements: flags levels: levels ticks: ticks [
 	"look at the flags and emit announcements. These are made in a different thread 
 	to avoid blocking the wvent listener	"

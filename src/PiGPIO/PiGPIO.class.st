@@ -38,14 +38,14 @@ PiGPIO >> cancelWatchdogOnPin: aPinNumber [
 	self setWatchdogOnPin: aPinNumber timeout: 0
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'initialization-release' }
 PiGPIO >> closeConnection [
 	"shutdown the socket"	
 			
 	commandStream close
 ]
 
-{ #category : #initialization }
+{ #category : #'initialization-release' }
 PiGPIO >> connectOnIP: anIPString port: aPortNumber [
 	"if the socket cannot be opened, store nil"	
 			
@@ -254,7 +254,7 @@ PiGPIO >> pwmValueForPin: pinNr [
 	^(self runCommand: 83 p1: pinNr p2: 0) signedLongAt: 1
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'digital pins' }
 PiGPIO >> readBank1 [
 	"return a bitmmap of high pins in bank 1
 	BR1 = 10 -- The result is unsigned 32 bits integer, so cannot use #runCommand"
