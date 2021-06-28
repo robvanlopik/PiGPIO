@@ -26,11 +26,7 @@ i2cConnectionn := myPiController openI2C: 16r68. "the I2C address of the device 
 month := i2cConnection read8BitsAt: 5. "register 5, in this example the month in BCD format"
 ```
 
-There is also a PotBoardDriver for Pharo-IOT (https://github.com/pharo-iot/PharoThings)
-Now the incantation is:
-```
-myRemotePi := RpiBoard3B driver: (RpiPiGPIODriver onIP: '192.168.1.55' port: 8888)
-```
+
 
 #### Announcements
 
