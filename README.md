@@ -43,5 +43,12 @@ myPiController pinsToWatch: #(12 13). "list of gpio's to monitor"
 on: PiGPIOPinChange do: [ :event | .... ].
 ```
 ```PiGPIOPinChange``` has accessors ```#pinNr, #newLevel, #tick```. The latter represents the internal clock of the pigpiod daemon, with an accuracy of some microseconds.
-
+### Miscellaneous
+Load with:
+```smalltalk
+Metacello new 
+	baseline: 'PiGPIO';
+	repository: 'github://robvanlopik/PiGPIO';
+	load .
+ ```
 
