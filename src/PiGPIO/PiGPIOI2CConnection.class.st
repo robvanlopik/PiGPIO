@@ -79,14 +79,14 @@ PiGPIOI2CConnection >> read8BitsAt: register [
 	^(self piGPIO runCommand: 61 p1: handle p2: register) unsignedLongAt: 1
 ]
 
-{ #category : #'reading-primitive data' }
+{ #category : #reading }
 PiGPIOI2CConnection >> readByte [
 	"read a single byte, directly without register
 	I2CRS = 59 - 16r3B - returns a number, not a byte"
 	^(self piGPIO runCommand: 59 p1: handle p2: 0) unsignedLongAt: 1
 ]
 
-{ #category : #'reading-primitive data' }
+{ #category : #reading }
 PiGPIOI2CConnection >> readByteAt: register [
 	"read a single byte, at register
 	I2CRB = 61 - 16r3B - returns a number, not a byte"
@@ -116,7 +116,7 @@ PiGPIOI2CConnection >> readDataBlockAt: reg [
 	^result 
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #reading }
 PiGPIOI2CConnection >> readDevice: count [ 
 	"Returns count bytes read from the raw device
 	I2CRD = 56"
@@ -127,14 +127,14 @@ PiGPIOI2CConnection >> readDevice: count [
 	^result 
 ]
 
-{ #category : #'reading-primitive data' }
+{ #category : #reading }
 PiGPIOI2CConnection >> readWordAt: register [
 	"read a single word at register
 	I2CRW = 63 - 16r3B - returns a number, not a byte"
 	^(self piGPIO runCommand: 63 p1: handle p2: register) unsignedShortAt: 1
 ]
 
-{ #category : #'reading-primitive data' }
+{ #category : #reading }
 PiGPIOI2CConnection >> readWordBigEndianAt: register [
 	"read a single word at register
 	I2CRW = 63 - 16r3B - returns a number, not a byte"
