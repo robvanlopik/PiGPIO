@@ -119,8 +119,8 @@ PiGPIO >> millisFromT1: tick1 toT2: tick2 [
 	take care of clock rollover"
 	| diff |
 	diff := tick2 - tick1.
-	(diff > 0) ifTrue: [ ^diff ].
-	^(diff + (1 << 32))
+	(diff > 0) ifTrue: [ ^diff/1000.0 ].
+	^(diff + (1 << 32))/1000.0
 ]
 
 { #category : #'digital pins' }
