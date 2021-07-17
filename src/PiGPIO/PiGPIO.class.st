@@ -113,6 +113,16 @@ PiGPIO >> isConnected [
 	^commandStream notNil
 ]
 
+{ #category : #misc }
+PiGPIO >> millisFromT1: tick1 toT2: tick2 [
+	"uniform method to get the time in milliseconds between two timestamps
+	take care of clock rollover"
+	| diff |
+	diff := tick2 - tick1.
+	(diff > 0) ifTrue: [ ^diff ].
+	^(diff + (1 << 32))
+]
+
 { #category : #'digital pins' }
 PiGPIO >> modeOfPin: pinNr [
 	"get the mode of pin pinNr. 0 means input, 1 = output ...
