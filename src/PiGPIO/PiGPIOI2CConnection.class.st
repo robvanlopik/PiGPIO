@@ -162,7 +162,7 @@ PiGPIOI2CConnection >> write8BitsAt: register data: aByte [
 PiGPIOI2CConnection >> writeByte: aByte [
 	"write a byte without  a register
 	I2CWS = 60"
-	^self piGPIO runCommand: 62 p1: handle p2: aByte
+	^self piGPIO runCommand: 60 p1: handle p2: aByte
 			
 ]
 
