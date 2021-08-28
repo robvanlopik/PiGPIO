@@ -1,5 +1,9 @@
 "
 A PiGPIOI2CConnection is created on a PiGPIO for each I2C address.
+
+provides transfers (read or write) of bytes, words and byteArrays. There is some redundancy in methods, with variants where a Byte is called 8Bits and a Word is called 16Bits to facilitate existing code. This also stems from the fact that we want to derive function names from the Python originals.
+
+In the case of word transfers we distinguish big-endian and little-endian, the latter being the default.
 "
 Class {
 	#name : #PiGPIOI2CConnection,
@@ -94,6 +98,11 @@ PiGPIOI2CConnection >> readByteAt: register [
 ]
 
 { #category : #accessing }
+PiGPIOI2CConnection >> readBytesAt: aRegister count: aNumber [
+	^self readDataBlock: aNumber at: aRegister
+]
+
+{ #category : #accessing }
 PiGPIOI2CConnection >> readDataBlock: count at: reg [ 
 	"read count bytes of data starting at register reg. Python i2c_read_i2c_block_data()"
 	"I2CRI = 67"
@@ -134,6 +143,14 @@ PiGPIOI2CConnection >> readWordAt: register [
 	^(self piGPIO runCommand: 63 p1: handle p2: register) unsignedShortAt: 1
 ]
 
+{ #category : #accessing }
+PiGPIOI2CConnection >> readWordAt: aRegister bigEndian: aBoolean [
+"read a single word at register
+	I2CRW = 63 - 16r3B - returns a number, not a byte"
+	^(self piGPIO runCommand: 63 p1: handle p2:aRegister) 
+									unsignedShortAt: 1 bigEndian: aBoolean
+]
+
 { #category : #reading }
 PiGPIOI2CConnection >> readWordBigEndianAt: register [
 	"read a single word at register
@@ -148,6 +165,33 @@ PiGPIOI2CConnection >> write16BitsAt: register data: aWord [
 	I2CWW = 64"
 	^self piGPIO runExtendedCommand: 64 p1: handle p2: register 
 			bytes: (ByteArray with: (aWord \\ 256) with: (aWord // 256) with: 0 with: 0 )
+]
+
+{ #category : #accessing }
+PiGPIOI2CConnection >> write16BitsAt: register data: aWord bigEndian: aBoolean [
+
+	"WWrited a word (2 bytes) at a register; from low to high
+	I2CWW = 64"
+
+	| bytesPacket |
+	bytesPacket := aBoolean
+		               ifTrue: [ 
+			               ByteArray
+				               with: aWord // 256
+				               with: aWord \\ 256
+				               with: 0
+				               with: 0 ]
+		               ifFalse: [ 
+			               ByteArray
+				               with: aWord \\ 256
+				               with: aWord // 256
+				               with: 0
+				               with: 0 ].
+	^ self piGPIO
+		  runExtendedCommand: 64
+		  p1: handle
+		  p2: register
+		  bytes: bytesPacket
 ]
 
 { #category : #accessing }
@@ -203,6 +247,19 @@ PiGPIOI2CConnection >> writeWordAt: register data: aWord [
 	I2CWW = 64"
 	^self piGPIO runExtendedCommand: 64 p1: handle p2: register 
 			bytes: (ByteArray with: (aWord \\ 256) with: (aWord // 256) with: 0 with: 0 )
+]
+
+{ #category : #accessing }
+PiGPIOI2CConnection >> writeWordAt: register data: aWord bigEndian: aBoolean [
+	"WWrited a word (2 bytes) at a register; from low to high
+	I2CWW = 64"
+	| packet |
+	
+	packet := aBoolean 
+		ifTrue: [ ByteArray with: (aWord // 256) with: (aWord \\ 256) with: 0 with: 0 ]
+		ifFalse: [ ByteArray with: (aWord \\ 256) with: (aWord // 256) with: 0 with: 0 ].
+	^self piGPIO runExtendedCommand: 64 p1: handle p2: register 
+			bytes: packet
 ]
 
 { #category : #accessing }

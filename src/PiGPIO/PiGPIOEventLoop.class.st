@@ -1,16 +1,13 @@
 "
-Irun a thread listening on a socket stream. when opening the stream a retrieve a handle that is used by PiGPIO to specify what to monitor.
+I run in a thread listening on a socket stream. When opening the stream I retrieve a handle that is used by PiGPIO to specify what to monitor.
 
 My SocketStream has a time-ut of 70, longer than the ALIVE message interval
  of 60 seconds, so it should never occur.
 
-I generate 3 announcements:
-PiGPIOPinChange when a pin that is monitored (by PiGPIO>>pinsToWatch) 
-changes state. More than 1 pin can change state during the same tick, 
-but these are reported separately.
-PiGPIOWatchdog when a watchdog timer is set for a pin and 
-it does not hange in the time specified.
-PiGPIOEvent when a event (0-31) is triggered by PiGPIO>>triggerEvent:
+I can generate 3 announcements:
+- PiGPIOPinChange when a pin that is monitored (by PiGPIO>>pinsToWatch) changes state. More than 1 pin can change state during the same tick, but these are reported separately.
+- PiGPIOWatchdog when a watchdog timer is set for a pin and it does not change in the time specified.
+- PiGPIOEvent when a event (0-31) is triggered by PiGPIO>>triggerEvent: (not yet implemented)
 "
 Class {
 	#name : #PiGPIOEventLoop,

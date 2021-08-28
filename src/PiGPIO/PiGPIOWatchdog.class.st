@@ -1,7 +1,7 @@
 "
 I announce the expiration of a watchdog timer for a pin.
-This has been set by PiGPIO>>setWatchdogOnPin:timeout:
-It means this time elapsed sinse the last pinchange or watchdog event.
+This has been set by PiGPIO>>#setWatchdogOnPin:timeout:
+It means this time elapsed since the last pinchange or watchdog event.
 We provide the pin number and the clock tick
 "
 Class {
