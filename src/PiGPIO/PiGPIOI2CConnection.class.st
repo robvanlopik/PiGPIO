@@ -63,20 +63,20 @@ PiGPIOI2CConnection >> processCallAt: register data: aWord [
 	^(self piGPIO runExtendedCommand: 69 p1: handle p2: register bytes: payLoad) unsignedLongAt: 1
 ]
 
-{ #category : #accessing }
+{ #category : #reading }
 PiGPIOI2CConnection >> read16BitsAt: register [
 	"Read a word (2 bytes) at a register; returns a byte as lowest part of an integer
 	I2CRW = 63"
 	^(self piGPIO runCommand: 63 p1: handle p2: register) unsignedLongAt: 1
 ]
 
-{ #category : #accessing }
+{ #category : #reading }
 PiGPIOI2CConnection >> read8BitsArray: blockSize startingAt: reg [
 	"only used for compatibility with wiringPi"
 	^self readDataBlock: blockSize at: reg
 ]
 
-{ #category : #accessing }
+{ #category : #reading }
 PiGPIOI2CConnection >> read8BitsAt: register [
 	"Read a byte at a register; returns a byte as lowest part of an integer
 	I2CRB = 61"
@@ -97,12 +97,12 @@ PiGPIOI2CConnection >> readByteAt: register [
 	^(self piGPIO runCommand: 61 p1: handle p2: register) unsignedLongAt: 1
 ]
 
-{ #category : #accessing }
+{ #category : #reading }
 PiGPIOI2CConnection >> readBytesAt: aRegister count: aNumber [
 	^self readDataBlock: aNumber at: aRegister
 ]
 
-{ #category : #accessing }
+{ #category : #reading }
 PiGPIOI2CConnection >> readDataBlock: count at: reg [ 
 	"read count bytes of data starting at register reg. Python i2c_read_i2c_block_data()"
 	"I2CRI = 67"
@@ -114,7 +114,7 @@ PiGPIOI2CConnection >> readDataBlock: count at: reg [
 	^result 
 ]
 
-{ #category : #accessing }
+{ #category : #reading }
 PiGPIOI2CConnection >> readDataBlockAt: reg [ 
 	"read  bytes of data starting at register reg. The device determines how many bytes are returned
 	in Python i2c_read_block_data"
@@ -143,7 +143,7 @@ PiGPIOI2CConnection >> readWordAt: register [
 	^(self piGPIO runCommand: 63 p1: handle p2: register) unsignedShortAt: 1
 ]
 
-{ #category : #accessing }
+{ #category : #reading }
 PiGPIOI2CConnection >> readWordAt: aRegister bigEndian: aBoolean [
 "read a single word at register
 	I2CRW = 63 - 16r3B - returns a number, not a byte"
@@ -159,7 +159,7 @@ PiGPIOI2CConnection >> readWordBigEndianAt: register [
 									unsignedShortAt: 1 bigEndian: true
 ]
 
-{ #category : #accessing }
+{ #category : #writing }
 PiGPIOI2CConnection >> write16BitsAt: register data: aWord [
 	"WWrited a word (2 bytes) at a register; from low to high
 	I2CWW = 64"
@@ -167,7 +167,7 @@ PiGPIOI2CConnection >> write16BitsAt: register data: aWord [
 			bytes: (ByteArray with: (aWord \\ 256) with: (aWord // 256) with: 0 with: 0 )
 ]
 
-{ #category : #accessing }
+{ #category : #writing }
 PiGPIOI2CConnection >> write16BitsAt: register data: aWord bigEndian: aBoolean [
 
 	"WWrited a word (2 bytes) at a register; from low to high
@@ -194,7 +194,7 @@ PiGPIOI2CConnection >> write16BitsAt: register data: aWord bigEndian: aBoolean [
 		  bytes: bytesPacket
 ]
 
-{ #category : #accessing }
+{ #category : #writing }
 PiGPIOI2CConnection >> write8BitsAt: register data: aByte [
 	"write a byte at a register
 	I2CWB = 62"
@@ -202,7 +202,7 @@ PiGPIOI2CConnection >> write8BitsAt: register data: aByte [
 				bytes: (ByteArray with: (aByte bitAnd: 16rFF) with: 0 with: 0 with: 0)
 ]
 
-{ #category : #accessing }
+{ #category : #writing }
 PiGPIOI2CConnection >> writeByte: aByte [
 	"write a byte without  a register
 	I2CWS = 60"
@@ -210,7 +210,7 @@ PiGPIOI2CConnection >> writeByte: aByte [
 			
 ]
 
-{ #category : #accessing }
+{ #category : #writing }
 PiGPIOI2CConnection >> writeByteAt: register data: aByte [
 	"write a byte at a register
 	I2CWB = 62"
@@ -219,19 +219,25 @@ PiGPIOI2CConnection >> writeByteAt: register data: aByte [
 ]
 
 { #category : #writing }
-PiGPIOI2CConnection >> writeDataBlock: aByteArray at: aRegister [
-	"write a aByteArray to register with count between reg and data on bus
-	I2CWK = 66"
-	
-	self piGPIO runExtendedCommand: 66 p1: handle p2: aRegister bytes: aByteArray
+PiGPIOI2CConnection >> writeBytesAt: aRegister data: aByteArray [
+	"the standard block write to an address"
+	self writeDataBlock: aByteArray at: aRegister 
 ]
 
 { #category : #writing }
-PiGPIOI2CConnection >> writeDataBlockNoCount: aByteArray at: aRegister [
+PiGPIOI2CConnection >> writeDataBlock: aByteArray at: aRegister [
 	"write a aByteArray to register, data directly follows register. Python i2c_write_i2c_block_data()
 	I2CWI = 68"
 	
 	self piGPIO runExtendedCommand: 68 p1: handle p2: aRegister bytes: aByteArray
+]
+
+{ #category : #writing }
+PiGPIOI2CConnection >> writeDataBlockWithCount: aByteArray at: aRegister [
+	"write a aByteArray to register with count between reg and data on bus
+	I2CWK = 66"
+	
+	self piGPIO runExtendedCommand: 66 p1: handle p2: aRegister bytes: aByteArray
 ]
 
 { #category : #writing }
@@ -241,7 +247,7 @@ PiGPIOI2CConnection >> writeDevice: data [
 	self piGPIO runExtendedCommand: 57 p1: handle p2: 0 bytes: data
 ]
 
-{ #category : #accessing }
+{ #category : #writing }
 PiGPIOI2CConnection >> writeWordAt: register data: aWord [
 	"WWrited a word (2 bytes) at a register; from low to high
 	I2CWW = 64"
@@ -249,7 +255,7 @@ PiGPIOI2CConnection >> writeWordAt: register data: aWord [
 			bytes: (ByteArray with: (aWord \\ 256) with: (aWord // 256) with: 0 with: 0 )
 ]
 
-{ #category : #accessing }
+{ #category : #writing }
 PiGPIOI2CConnection >> writeWordAt: register data: aWord bigEndian: aBoolean [
 	"WWrited a word (2 bytes) at a register; from low to high
 	I2CWW = 64"
@@ -262,7 +268,7 @@ PiGPIOI2CConnection >> writeWordAt: register data: aWord bigEndian: aBoolean [
 			bytes: packet
 ]
 
-{ #category : #accessing }
+{ #category : #writing }
 PiGPIOI2CConnection >> writeWordBigEndianAt: register data: aWord [
 	"WWrited a word (2 bytes) at a register; from low to high
 	I2CWW = 64"

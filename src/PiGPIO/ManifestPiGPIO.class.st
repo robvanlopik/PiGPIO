@@ -1,8 +1,5 @@
 "
-I listen on a different socket for notifications, These can be for pin change, events or a watchdog on a pin. For each message an appropriate announcement is fired.
-I am created by PiGPIO class>>onIP:port:
-and started with PiGPIO>>startEventLoop
-Clearly the ip and port should be identical to those used by PiGPIO
+This package contains Pharo code to interact with the pigpiod daemon on a Raspberry Pi. Communication is through the socket interface, so this software can run on the Pi itself or any other IP-connected computer.
 "
 Class {
 	#name : #ManifestPiGPIO,

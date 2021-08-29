@@ -389,7 +389,7 @@ PiGPIO >> ticks [
 
 { #category : #misc }
 PiGPIO >> trigger: aPinNr length: pulseLength level: oneOrZero [
-	"Send a trigger pulse to aPinNrO.  The GPIO is set to
+	"Send a trigger pulse to aPinNr.  The GPIO is set to
       level for pulseLength microseconds (0-100) and then reset to not level.
 	TRIG = 37"
 	 
