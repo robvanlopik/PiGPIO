@@ -1,13 +1,14 @@
 "
 I run in a thread listening on a socket stream. When opening the stream I retrieve a handle that is used by PiGPIO to specify what to monitor.
 
-My SocketStream has a time-ut of 70, longer than the ALIVE message interval
+My SocketStream has a time-out of 70, longer than the ALIVE message interval
  of 60 seconds, so it should never occur.
 
-I can generate 3 announcements:
+I can generate 4 announcements:
 - PiGPIOPinChange when a pin that is monitored (by PiGPIO>>pinsToWatch) changes state. More than 1 pin can change state during the same tick, but these are reported separately.
 - PiGPIOWatchdog when a watchdog timer is set for a pin and it does not change in the time specified.
-- PiGPIOEvent when a event (0-31) is triggered by PiGPIO>>triggerEvent: (not yet implemented)
+- PiGPIOEvent when a event (0-31) is triggered by PiGPIO>>triggerEvent: (not yet implemented).
+- PiGPIOAlive every 60 seconds with flags, levels and ticks; can be used as watchdog for the connection
 "
 Class {
 	#name : #PiGPIOEventLoop,
@@ -63,12 +64,17 @@ PiGPIOEventLoop >> emitAnnouncements: flags levels: levels ticks: ticks [
 					forkAt: Processor userInterruptPriority .
 			^self].
 		
-		"show the ALIVE message. SHOULD BE REMOVED"
-		((flags bitAnd: (1 << 6) ) ~= 0) ifTrue: [ 
-			(Time now print24, 'KeepAlive ') traceCr. ^self].
+				"show the ALIVE message"
+		((flags bitAnd: (1 << 6) ) ~= 0) ifTrue: [[
+			 announcer announce: (PiGPIOAlive new 
+				flags: flags; levels: levels; ticks: ticks; yourself).]
+					forkAt: Processor userInterruptPriority .
+			^self].
+		
+	
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'announcement handling' }
 PiGPIOEventLoop >> eventsToMonitor: bitMask [
 	"selection of possible events to report"	
 			
@@ -120,7 +126,7 @@ PiGPIOEventLoop >> packedCommand: cmdNr p1: param1 p2: param2 [
 	^commandBuffer
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'announcement handling' }
 PiGPIOEventLoop >> pinsToMonitor: bitmask [
 	"can i do this without mutex?"
 	pinsToMonitor := bitmask
@@ -142,7 +148,7 @@ PiGPIOEventLoop >> processEvents [
 		] ] ensure: [  eventStream close ] 
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #accessing }
 PiGPIOEventLoop >> readBank1 [
 	"readBank1 drom the eventStream
 	command BR1 = 10	"
